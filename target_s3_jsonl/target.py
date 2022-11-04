@@ -18,18 +18,38 @@ class TargetS3Jsonl(Target):
         th.Property(
             "s3_bucket",
             th.StringType,
-            description="The scheme with which output files will be named"
+            description="The scheme with which output files will be named",
+            required=True
         ),
         th.Property(
             "s3_prefix",
             th.StringType,
-            description="The path to the target output file"
+            description="The path to the target output file",
+            required=True
         ),
+        # th.Property(
+        #     "file_naming_scheme",
+        #     th.StringType,
+        #     description="The scheme with which output files will be named"
+        # ),
         th.Property(
-            "file_naming_scheme",
-            th.StringType,
-            description="The scheme with which output files will be named"
-        ),
+            "hive_partitions",
+            th.ArrayType(th.ObjectType(
+                th.Property(
+                    'name',
+                    th.StringType,
+                    description="Name of the hive partition"
+                ),
+                th.Property(
+                    'value',
+                    th.StringType,
+                    description="Value of the hive partition"
+                )
+            )),
+            description="List of name-value pairs for hive partitioning when writing to S3. "
+                        "Preserve the other of the key dfines.",
+            default=[]
+        )
 
     ).to_dict()
 

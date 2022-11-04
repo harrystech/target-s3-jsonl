@@ -7,13 +7,19 @@ import json
 import boto3 as boto3
 from singer_sdk.sinks import BatchSink
 
-s3_client = boto3.client('s3')
-
 
 class S3JsonlSink(BatchSink):
     """s3-jsonl target sink class."""
 
     max_size = 10000  # Max records to write in one batch
+
+    def _hive_partitions_to_key(self):
+        return [f"{hive_partition['name']}={hive_partition['value']}" for hive_partition in
+                self.config['hive_partitions']]
+
+    def _get_batch_s3_key(self, context):
+        return "/".join(
+            [self.config['s3_prefix'], self.stream_name, *self._hive_partitions_to_key(), context['filename']])
 
     def start_batch(self, context: dict) -> None:
         """Start a batch.
@@ -24,7 +30,7 @@ class S3JsonlSink(BatchSink):
         # Sample:
         # ------
         batch_key = context["batch_id"]
-        context["file_path"] = f"{self.config['file_path'].rtrim('/')}/{self.stream_name}_{batch_key}.jsonl"
+        context["filename"] = f"{self.stream_name}_{batch_key}.jsonl"
 
     def process_record(self, record: dict, context: dict) -> None:
         """Process the record.
@@ -32,20 +38,16 @@ class S3JsonlSink(BatchSink):
         Developers may optionally read or write additional markers within the
         passed `context` dict from the current batch.
         """
-        # Sample:
-        # ------
-        # with open(context["file_path"], "a") as csvfile:
-        #     csvfile.write(record)
-
-        filename_path = [self.stream_name]
-        if 'filepath' in self.config:
-            filename_path.append(self.config['filepath'])
-
-        with open(context['file_path'], 'a', encoding='utf-8') as json_file:
+        with open(context['filename'], 'a', encoding='utf-8') as json_file:
             json_file.write(json.dumps(record) + '\n')
 
-    def process_batch(self, context: dict) -> None:
+    def process_batch(self, context: dict, boto3_session=None) -> None:
         """Write out any prepped records and return once fully written."""
         # Sample:
         # ------
-        s3_client.upload(context["file_path"], self.batch_config)  # Upload file
+        if not boto3_session:
+            boto3_session = boto3._get_default_session()
+
+        s3_client = boto3_session.client('s3')
+        with open(context['filename'], 'r') as f:
+            s3_client.put_object(Body=f.read(), Bucket=self.config['s3_bucket'], Key=self._get_batch_s3_key(context))

@@ -21,7 +21,7 @@ class TestS3JsonlSink(TestCase):
 
     def setUp(self) -> None:
         self.stream_name = "stream_test"
-        self.s3_bucket = "unit-test-bucket"
+        self.bucket = "unit-test-bucket"
         self.prefix = "unit-test-prefix"
 
     def test_get_batch_s3_key(self):
@@ -29,7 +29,7 @@ class TestS3JsonlSink(TestCase):
 
         target_s3_jsonl = TargetS3Jsonl(
             config={
-                "s3_bucket": self.s3_bucket,
+                "bucket": self.bucket,
                 "prefix": self.prefix,
                 "hive_partitions": [
                     {
@@ -62,7 +62,7 @@ class TestS3JsonlSink(TestCase):
 
         target_s3_jsonl = TargetS3Jsonl(
             config={
-                "s3_bucket": self.s3_bucket,
+                "bucket": self.bucket,
                 "prefix": self.prefix,
             }
         )
@@ -87,11 +87,9 @@ class TestS3JsonlSink(TestCase):
 
         boto3_session = boto3.session.Session()
         s3_connection = boto3_session.resource("s3", region_name="us-east-1")
-        s3_connection.create_bucket(Bucket=self.s3_bucket)
+        s3_connection.create_bucket(Bucket=self.bucket)
 
-        target_s3_jsonl = TargetS3Jsonl(
-            config={"s3_bucket": self.s3_bucket, "prefix": ""}
-        )
+        target_s3_jsonl = TargetS3Jsonl(config={"bucket": self.bucket, "prefix": ""})
 
         sink = S3JsonlSink(
             target_s3_jsonl,
@@ -113,8 +111,6 @@ class TestS3JsonlSink(TestCase):
             filepath,
             [
                 content["Key"]
-                for content in s3_client.list_objects_v2(Bucket=self.s3_bucket)[
-                    "Contents"
-                ]
+                for content in s3_client.list_objects_v2(Bucket=self.bucket)["Contents"]
             ],
         )

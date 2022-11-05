@@ -3,9 +3,10 @@
   <component name="ChangeListManager">
     <list default="true" id="9d025512-f30e-4fff-a427-fb9be4f508d4" name="Default Changelist" comment="">
       <change beforePath="$PROJECT_DIR$/../data-eng-microservices/copy_objects/python/src/lambda_handler.py" beforeDir="false" afterPath="$PROJECT_DIR$/../data-eng-microservices/copy_objects/python/src/lambda_handler.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.github/workflows/ci_workflow.yml" beforeDir="false" afterPath="$PROJECT_DIR$/.github/workflows/ci_workflow.yml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/poetry.lock" beforeDir="false" afterPath="$PROJECT_DIR$/poetry.lock" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/pyproject.toml" beforeDir="false" afterPath="$PROJECT_DIR$/pyproject.toml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/target_s3_jsonl/sinks.py" beforeDir="false" afterPath="$PROJECT_DIR$/target_s3_jsonl/sinks.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/target_s3_jsonl/target.py" beforeDir="false" afterPath="$PROJECT_DIR$/target_s3_jsonl/target.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/target_s3_jsonl/tests/test_sinks.py" beforeDir="false" afterPath="$PROJECT_DIR$/target_s3_jsonl/tests/test_sinks.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />

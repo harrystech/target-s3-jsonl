@@ -14,7 +14,7 @@ class TargetS3Jsonl(Target):
     name = "target-s3-jsonl"
     config_jsonschema = th.PropertiesList(
         th.Property(
-            "s3_bucket",
+            "bucket",
             th.StringType,
             description="The scheme with which output files will be named."
             " Required when specifying storage type S3",

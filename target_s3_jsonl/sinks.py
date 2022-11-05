@@ -29,15 +29,17 @@ class S3JsonlSink(BatchSink):
             for hive_partition in self.config["hive_partitions"]
         ]
 
-    def _get_batch_filepath(self, filename):
-        return "/".join(
+    def _get_batch_key(self, batch_id):
+        path = self.config["prefix_scheme"].format(
+            stream_name=self.stream_name, batch_id=batch_id
+        )
+        filename = "-".join(
             [
-                self.config["prefix"],
-                self.stream_name,
-                *self._hive_partitions_to_key(),
-                filename,
+                self.config["filename_prefix"].format(stream_name=self.stream_name),
+                batch_id,
             ]
         )
+        return f"{path}/{filename}.jsonl"
 
     def start_batch(self, context: dict) -> None:
         """Start a batch.
@@ -47,9 +49,7 @@ class S3JsonlSink(BatchSink):
         """
         # Sample:
         # ------
-        batch_key = context["batch_id"]
-        filename = f"{self.stream_name}_{batch_key}.jsonl"
-        context["filepath"] = self._get_batch_filepath(filename)
+        context["filepath"] = self._get_batch_key(context["batch_id"])
         Path(context["filepath"]).parent.mkdir(parents=True, exist_ok=True)
 
     def process_record(self, record: dict, context: dict) -> None:
@@ -77,3 +77,7 @@ class S3JsonlSink(BatchSink):
         )
         with open(context["filepath"], "r") as f:
             s3_client.put_object(Body=f.read(), Bucket=bucket, Key=filepath)
+        logging.info(
+            f"Deleting file locally after a successful upload: {context['filepath']}"
+        )
+        Path(context["filepath"]).unlink()

@@ -21,29 +21,16 @@ class TargetS3Jsonl(Target):
             required=True,
         ),
         th.Property(
-            "prefix",
+            "prefix_scheme",
             th.StringType,
-            description="The path to the target output file",
-            default="output",  # type: ignore
+            description="The scheme with which output files will be named",
         ),
         th.Property(
-            "hive_partitions",
-            th.ArrayType(
-                th.ObjectType(
-                    th.Property(
-                        "name", th.StringType, description="Name of the hive partition"
-                    ),
-                    th.Property(
-                        "value",
-                        th.StringType,
-                        description="Value of the hive partition",
-                    ),
-                )
-            ),
-            description="List of name-value pairs for hive partitioning"
-            " when writing to S3. "
-            "Preserve the other of the key dfines.",
-            default=[],  # type: ignore
+            "filename_prefix",
+            th.StringType,
+            description="The scheme with which to name each file. "
+            "Make sure it is unique per stream.",
+            default="{stream_name}",  # type: ignore
         ),
         th.Property(
             "max_size",

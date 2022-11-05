@@ -22,25 +22,18 @@ class TestS3JsonlSink(TestCase):
     def setUp(self) -> None:
         self.stream_name = "stream_test"
         self.bucket = "unit-test-bucket"
-        self.prefix = "unit-test-prefix"
+        self.prefix_scheme = (
+            "unit-test-prefix/{stream_name}/__pk_a=value_a/__pk_b=value_b"
+        )
+        self.filename_prefix = "{stream_name}"
+        self.batch_id = "123"
 
-    def test_get_batch_s3_key(self):
-        filename = "fliepath.jsonl"
-
+    def test_get_batch_key(self):
         target_s3_jsonl = TargetS3Jsonl(
             config={
                 "bucket": self.bucket,
-                "prefix": self.prefix,
-                "hive_partitions": [
-                    {
-                        "name": "__pk_a",
-                        "value": "value_a",
-                    },
-                    {
-                        "name": "__pk_b",
-                        "value": "value_b",
-                    },
-                ],
+                "prefix_scheme": self.prefix_scheme,
+                "filename_prefix": self.filename_prefix,
             }
         )
 
@@ -52,36 +45,14 @@ class TestS3JsonlSink(TestCase):
         )
 
         self.assertEqual(
-            sink._get_batch_filepath(filename),
-            f"{self.prefix}/{self.stream_name}/__pk_a=value_a/"
-            f"__pk_b=value_b/{filename}",
-        )
-
-    def test_get_batch_s3_key_no_partitions(self):
-        filename = "fliepath.jsonl"
-
-        target_s3_jsonl = TargetS3Jsonl(
-            config={
-                "bucket": self.bucket,
-                "prefix": self.prefix,
-            }
-        )
-
-        sink = S3JsonlSink(
-            target_s3_jsonl,
-            key_properties=None,
-            schema={"properties": {}},
-            stream_name=self.stream_name,
-        )
-
-        self.assertEqual(
-            sink._get_batch_filepath(filename),
-            f"{self.prefix}/{self.stream_name}/{filename}",
+            sink._get_batch_key(self.batch_id),
+            f"unit-test-prefix/{self.stream_name}/__pk_a=value_a/"
+            f"__pk_b=value_b/{self.stream_name}-{self.batch_id}.jsonl",
         )
 
     @mock_s3
-    @mock.patch("target_s3_jsonl.sinks.S3JsonlSink._get_batch_filepath")
-    def test_process_batch(self, mock_get_batch_s3_key):
+    @mock.patch("pathlib.Path.unlink")
+    def test_process_batch(self, mock_unlink: mock.Mock):
         filepath = "path/to/file.jsonl"
         context = {"filepath": filepath, "batch_id": mock.MagicMock()}
 
@@ -89,7 +60,9 @@ class TestS3JsonlSink(TestCase):
         s3_connection = boto3_session.resource("s3", region_name="us-east-1")
         s3_connection.create_bucket(Bucket=self.bucket)
 
-        target_s3_jsonl = TargetS3Jsonl(config={"bucket": self.bucket, "prefix": ""})
+        target_s3_jsonl = TargetS3Jsonl(
+            config={"bucket": self.bucket, "prefix_scheme": ""}
+        )
 
         sink = S3JsonlSink(
             target_s3_jsonl,
@@ -98,12 +71,11 @@ class TestS3JsonlSink(TestCase):
             stream_name=self.stream_name,
         )
 
-        mock_get_batch_s3_key.return_value = "path/to/file.jsonl"
-
         with mock.patch("builtins.open", mock.mock_open(read_data="data")) as mock_file:
             sink.process_batch(context=context, boto3_session=boto3_session)
 
         mock_file.assert_called_with(filepath, "r")
+        mock_unlink.assert_called_once()
 
         s3_client = boto3_session.client("s3")
 

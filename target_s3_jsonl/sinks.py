@@ -63,7 +63,9 @@ class S3JsonlSink(BatchSink):
 
     def process_batch(self, context: dict, boto3_session=None) -> None:
         """Write out any prepped records and return once fully written."""
-        if not (s3_bucket := self.config.get("s3_bucket")):
+        s3_bucket = self.config.get("s3_bucket")
+        filepath = context['filepath']
+        if not s3_bucket:
             return
 
         if not boto3_session:
@@ -72,10 +74,10 @@ class S3JsonlSink(BatchSink):
         s3_client = boto3_session.client("s3")
         logging.info(
             f"{self.stream_name}: Writing {context['batch_id']} "
-            f"to s3://{s3_bucket}/{context['filepath']}",
+            f"to s3://{s3_bucket}/{filepath}",
             extra={"stream_name": self.stream_name, "batch_id": context["batch_id"]},
         )
         with open(context["filepath"], "r") as f:
             s3_client.put_object(
-                Body=f.read(), Bucket=s3_bucket, Key=context["filepath"]
+                Body=f.read(), Bucket=s3_bucket, Key=filepath
             )

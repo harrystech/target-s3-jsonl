@@ -13,7 +13,10 @@ from singer_sdk.sinks import BatchSink
 class S3JsonlSink(BatchSink):
     """s3-jsonl target sink class."""
 
-    include_sdc_metadata_properties = True
+    @property
+    def include_sdc_metadata_properties(self):
+        """Include extra columns with sdc metadata properties."""
+        return self.config["include_sdc_metadata_properties"]
 
     @property
     def max_size(self) -> int:

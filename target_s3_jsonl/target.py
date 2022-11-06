@@ -38,6 +38,13 @@ class TargetS3Jsonl(Target):
             description="Max number of record per batch",
             default=10000,  # type: ignore
         ),
+        th.Property(
+            "include_sdc_metadata_properties",
+            th.BooleanType,
+            description="Include sdc metadata properties (batched time, "
+            "extracted time etc.)",
+            default=False,  # type: ignore
+        ),
     ).to_dict()
 
     default_sink_class = S3JsonlSink

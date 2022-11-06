@@ -25,9 +25,3 @@ plugins:
       value: "{stream_name}"
     - name: max_size
       value: 100
-    - name: hive_partitions
-      value:
-      - name: __pk_a
-        value: value_a
-      - name: __pk_b
-        value: value_b

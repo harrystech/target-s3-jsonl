@@ -9,6 +9,8 @@ from pathlib import Path
 import boto3
 from singer_sdk.sinks import BatchSink
 
+common_boto3_session = boto3.session.Session()
+
 
 class S3JsonlSink(BatchSink):
     """s3-jsonl target sink class."""
@@ -67,7 +69,7 @@ class S3JsonlSink(BatchSink):
     def process_batch(self, context: dict, boto3_session=None) -> None:
         """Write out any prepped records and return once fully written."""
         if not boto3_session:
-            boto3_session = boto3._get_default_session()
+            boto3_session = common_boto3_session
 
         bucket = self.config["bucket"]
         filepath = context["filepath"]

@@ -72,7 +72,7 @@ class TestS3JsonlSink(TestCase):
         )
 
         with mock.patch("builtins.open", mock.mock_open(read_data="data")) as mock_file:
-            sink.process_batch(context=context, boto3_session=boto3_session)
+            sink.process_batch(context=context, s3_client=boto3_session.client("s3"))
 
         mock_file.assert_called_with(filepath, "r")
         mock_unlink.assert_called_once()

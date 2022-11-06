@@ -9,7 +9,7 @@ from pathlib import Path
 import boto3
 from singer_sdk.sinks import BatchSink
 
-common_boto3_session = boto3.session.Session()
+common_s3_client = boto3.client("s3")
 
 
 class S3JsonlSink(BatchSink):
@@ -27,12 +27,6 @@ class S3JsonlSink(BatchSink):
         Returns: Max number of records to batch before `is_full=True`
         """
         return self.config["max_size"]
-
-    def _hive_partitions_to_key(self):
-        return [
-            f"{hive_partition['name']}={hive_partition['value']}"
-            for hive_partition in self.config["hive_partitions"]
-        ]
 
     def _get_batch_key(self, batch_id):
         path = self.config["prefix_scheme"].format(
@@ -52,8 +46,6 @@ class S3JsonlSink(BatchSink):
         Developers may optionally add additional markers to the `context` dict,
         which is unique to this batch.
         """
-        # Sample:
-        # ------
         context["filepath"] = self._get_batch_key(context["batch_id"])
         Path(context["filepath"]).parent.mkdir(parents=True, exist_ok=True)
 
@@ -66,15 +58,14 @@ class S3JsonlSink(BatchSink):
         with open(context["filepath"], "a", encoding="utf-8") as json_file:
             json_file.write(json.dumps(record, default=str) + "\n")
 
-    def process_batch(self, context: dict, boto3_session=None) -> None:
+    def process_batch(self, context: dict, s3_client=None) -> None:
         """Write out any prepped records and return once fully written."""
-        if not boto3_session:
-            boto3_session = common_boto3_session
+        if not s3_client:
+            s3_client = common_s3_client
 
         bucket = self.config["bucket"]
         filepath = context["filepath"]
 
-        s3_client = boto3_session.client("s3")
         logging.info(
             f"{self.stream_name}: Writing {context['batch_id']} "
             f"to s3://{bucket}/{filepath}",

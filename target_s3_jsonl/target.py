@@ -1,35 +1,49 @@
-"""S3Jsonl target class."""
+"""s3-jsonl target class."""
 
 from __future__ import annotations
 
-from singer_sdk.target_base import Target
 from singer_sdk import typing as th
+from singer_sdk.target_base import Target
 
-from target_s3_jsonl.sinks import (
-    S3JsonlSink,
-)
+from target_s3_jsonl.sinks import S3JsonlSink
 
 
 class TargetS3Jsonl(Target):
-    """Sample target for S3Jsonl."""
+    """Sample target for s3-jsonl."""
 
     name = "target-s3-jsonl"
     config_jsonschema = th.PropertiesList(
         th.Property(
-            "filepath",
+            "bucket",
             th.StringType,
-            description="The path to the target output file"
+            description="The scheme with which output files will be named."
+            " Required when specifying storage type S3",
+            required=True,
         ),
         th.Property(
-            "file_naming_scheme",
+            "prefix_scheme",
             th.StringType,
-            description="The scheme with which output files will be named"
+            description="The scheme with which output files will be named",
         ),
         th.Property(
-            "auth_token",
+            "filename_prefix",
             th.StringType,
-            secret=True,  # Flag config as protected.
-            description="The path to the target output file"
+            description="The scheme with which to name each file. "
+            "Make sure it is unique per stream.",
+            default="{stream_name}",  # type: ignore
+        ),
+        th.Property(
+            "max_size",
+            th.IntegerType,
+            description="Max number of record per batch",
+            default=10000,  # type: ignore
+        ),
+        th.Property(
+            "include_sdc_metadata_properties",
+            th.BooleanType,
+            description="Include sdc metadata properties (batched time, "
+            "extracted time etc.)",
+            default=False,  # type: ignore
         ),
     ).to_dict()
 

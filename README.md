@@ -1,6 +1,6 @@
 # target-s3-jsonl
 
-`target-s3-jsonl` is a Singer target for S3Jsonl.
+`target-s3-jsonl` is a Singer target for s3-jsonl.
 
 Build with the [Meltano Target SDK](https://sdk.meltano.com).
 

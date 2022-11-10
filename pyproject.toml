@@ -1,11 +1,11 @@
 [tool.poetry]
 name = "target-s3-jsonl"
-version = "0.0.1"
-description = "`target-s3-jsonl` is a Singer target for S3Jsonl, built with the Meltano Singer SDK."
+version = "0.1.0"
+description = "`target-s3-jsonl` is a Singer target for s3-jsonl, built with the Meltano Singer SDK."
 authors = ["harrystech"]
 keywords = [
     "ELT",
-    "S3Jsonl",
+    "s3-jsonl",
 ]
 license = "Apache 2.0"
 
@@ -13,16 +13,20 @@ license = "Apache 2.0"
 python = "<3.11,>=3.7.1"
 requests = "^2.25.1"
 singer-sdk = "^0.13.0"
+boto3 = "^1.26.2"
 
 [tool.poetry.dev-dependencies]
 pytest = "^6.2.5"
 tox = "^3.24.4"
 flake8 = "^3.9.2"
-black = "^21.9b0"
 pydocstyle = "^6.1.1"
 mypy = "^0.910"
 types-requests = "^2.26.1"
 isort = "^5.10.1"
+moto = {extras = ["s3"], version = "^4.0.9"}
+black = "^22.10.0"
+boto3-stubs = "^1.26.3"
+
 
 [tool.isort]
 profile = "black"

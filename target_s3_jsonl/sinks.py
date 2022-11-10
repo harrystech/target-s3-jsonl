@@ -1,14 +1,44 @@
-"""S3Jsonl target sink class, which handles writing streams."""
+"""s3-jsonl target sink class, which handles writing streams."""
 
 from __future__ import annotations
 
+import json
+import logging
+from pathlib import Path
+
+import boto3
 from singer_sdk.sinks import BatchSink
+
+common_s3_client = boto3.client("s3")
 
 
 class S3JsonlSink(BatchSink):
-    """S3Jsonl target sink class."""
+    """s3-jsonl target sink class."""
 
-    max_size = 10000  # Max records to write in one batch
+    @property
+    def include_sdc_metadata_properties(self):
+        """Include extra columns with sdc metadata properties."""
+        return self.config["include_sdc_metadata_properties"]
+
+    @property
+    def max_size(self) -> int:
+        """Override max batch size.
+
+        Returns: Max number of records to batch before `is_full=True`
+        """
+        return self.config["max_size"]
+
+    def _get_batch_key(self, batch_id):
+        path = self.config["prefix_scheme"].format(
+            stream_name=self.stream_name, batch_id=batch_id
+        )
+        filename = "-".join(
+            [
+                self.config["filename_prefix"].format(stream_name=self.stream_name),
+                batch_id,
+            ]
+        )
+        return f"{path}/{filename}.jsonl"
 
     def start_batch(self, context: dict) -> None:
         """Start a batch.
@@ -16,10 +46,8 @@ class S3JsonlSink(BatchSink):
         Developers may optionally add additional markers to the `context` dict,
         which is unique to this batch.
         """
-        # Sample:
-        # ------
-        # batch_key = context["batch_id"]
-        # context["file_path"] = f"{batch_key}.csv"
+        context["filepath"] = self._get_batch_key(context["batch_id"])
+        Path(context["filepath"]).parent.mkdir(parents=True, exist_ok=True)
 
     def process_record(self, record: dict, context: dict) -> None:
         """Process the record.
@@ -27,14 +55,25 @@ class S3JsonlSink(BatchSink):
         Developers may optionally read or write additional markers within the
         passed `context` dict from the current batch.
         """
-        # Sample:
-        # ------
-        # with open(context["file_path"], "a") as csvfile:
-        #     csvfile.write(record)
+        with open(context["filepath"], "a", encoding="utf-8") as json_file:
+            json_file.write(json.dumps(record, default=str) + "\n")
 
-    def process_batch(self, context: dict) -> None:
+    def process_batch(self, context: dict, s3_client=None) -> None:
         """Write out any prepped records and return once fully written."""
-        # Sample:
-        # ------
-        # client.upload(context["file_path"])  # Upload file
-        # Path(context["file_path"]).unlink()  # Delete local copy
+        if not s3_client:
+            s3_client = common_s3_client
+
+        bucket = self.config["bucket"]
+        filepath = context["filepath"]
+
+        logging.info(
+            f"{self.stream_name}: Writing {context['batch_id']} "
+            f"to s3://{bucket}/{filepath}",
+            extra={"stream_name": self.stream_name, "batch_id": context["batch_id"]},
+        )
+        with open(context["filepath"], "r") as f:
+            s3_client.put_object(Body=f.read(), Bucket=bucket, Key=filepath)
+        logging.info(
+            f"Deleting file locally after a successful upload: {context['filepath']}"
+        )
+        Path(context["filepath"]).unlink()

@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "target-s3-jsonl"
-version = "0.1.0"
+version = "0.1.1"
 description = "`target-s3-jsonl` is a Singer target for s3-jsonl, built with the Meltano Singer SDK."
 authors = ["harrystech"]
 keywords = [

@@ -54,7 +54,11 @@ class TestS3JsonlSink(TestCase):
     @mock.patch("pathlib.Path.unlink")
     def test_process_batch(self, mock_unlink: mock.Mock):
         filepath = "path/to/file.jsonl"
-        context = {"filepath": filepath, "batch_id": mock.MagicMock()}
+        context = {
+            "filepath": filepath,
+            "batch_id": mock.MagicMock(),
+            "json_fd": mock.MagicMock(),
+        }
 
         boto3_session = boto3.session.Session()
         s3_connection = boto3_session.resource("s3", region_name="us-east-1")

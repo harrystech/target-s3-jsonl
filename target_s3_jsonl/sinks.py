@@ -46,8 +46,12 @@ class S3JsonlSink(BatchSink):
         Developers may optionally add additional markers to the `context` dict,
         which is unique to this batch.
         """
-        context["filepath"] = self._get_batch_key(context["batch_id"])
-        Path(context["filepath"]).parent.mkdir(parents=True, exist_ok=True)
+        local_path = self._get_batch_key(context["batch_id"])
+        Path(local_path).parent.mkdir(parents=True, exist_ok=True)
+        json_fd = open(local_path, "a", encoding="utf-8")
+
+        context["filepath"] = local_path
+        context["json_fd"] = json_fd
 
     def process_record(self, record: dict, context: dict) -> None:
         """Process the record.
@@ -55,11 +59,14 @@ class S3JsonlSink(BatchSink):
         Developers may optionally read or write additional markers within the
         passed `context` dict from the current batch.
         """
-        with open(context["filepath"], "a", encoding="utf-8") as json_file:
-            json_file.write(json.dumps(record, default=str) + "\n")
+        json_fd = context["json_fd"]
+        json_fd.write(json.dumps(record, default=str) + "\n")
 
     def process_batch(self, context: dict, s3_client=None) -> None:
         """Write out any prepped records and return once fully written."""
+        json_fd = context["json_fd"]
+        json_fd.close()
+
         if not s3_client:
             s3_client = common_s3_client
 
